@@ -1,7 +1,7 @@
 kill_signal = "SIGINT"
 kill_timeout = 5
 processes = [ ]
-app = "build-ui-speed-metal-042e"
+app = "build-ui-speed-metal"
 
 [env]
 DATABASE_URL = "file:/data/sqlite.db"
