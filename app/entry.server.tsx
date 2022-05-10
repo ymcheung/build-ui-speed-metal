@@ -1,21 +1,28 @@
-import { renderToString } from 'react-dom/server'
-import { RemixServer } from '@remix-run/react'
-import type { EntryContext } from '@remix-run/server-runtime'
+import type { EntryContext } from '@remix-run/node';
+import { RemixServer } from '@remix-run/react';
+import { renderToString } from 'react-dom/server';
+
+import { getCssText } from '~/styles/stitches.config';
 
 export default function handleRequest(
   request: Request,
   responseStatusCode: number,
   responseHeaders: Headers,
-  remixContext: EntryContext,
+  remixContext: EntryContext
 ) {
-  const markup = renderToString(
-    <RemixServer context={remixContext} url={request.url} />,
-  )
+  let markup = renderToString(
+    <RemixServer context={remixContext} url={request.url} />
+  );
 
-  responseHeaders.set('Content-Type', 'text/html')
+  markup = markup.replace(
+    /<style id="stitches">.*<\/style>/g,
+    `<style id="stitches">${getCssText()}</style>`
+  );
 
-  return new Response('<!DOCTYPE html>' + markup, {
+  responseHeaders.set("Content-Type", "text/html");
+
+  return new Response("<!DOCTYPE html>" + markup, {
     status: responseStatusCode,
     headers: responseHeaders,
-  })
+  });
 }

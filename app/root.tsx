@@ -1,3 +1,4 @@
+import type { MetaFunction } from '@remix-run/node';
 import {
   Links,
   LiveReload,
@@ -5,49 +6,73 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useCatch,
   useLoaderData,
-} from '@remix-run/react'
+} from '@remix-run/react';
+import { useContext, useEffect } from 'react';
+import ClientStyleContext from './styles/client.context';
+// import { styled } from '~/styles/stitches.config';
 import type { LoaderFunction } from '@remix-run/server-runtime'
 import { json } from '@remix-run/server-runtime'
-import Nav from '~/components/nav'
 import type { Theme } from './utils/theme'
 import { SsrTheme, ThemeMeta, ThemeProvider, useTheme } from './utils/theme'
 import { getThemeSession } from './utils/theme-session.server'
 
 type LoaderData = { theme: Theme | null }
 
+export const meta: MetaFunction = () => ({
+  charset: 'utf-8',
+  viewport: 'width=device-width,initial-scale=1',
+});
+
+interface DocumentProps {
+  children: React.ReactNode;
+  title?: string;
+}
+
 export const loader: LoaderFunction = async ({ request }) => {
-  const { getTheme } = await getThemeSession(request)
+  const { getTheme } = await getThemeSession(request);
 
   return json<LoaderData>({ theme: getTheme() })
 }
 
-function App() {
-  const [theme] = useTheme()
+const Document = ({ children, title }: DocumentProps) => {
+  const clientStyleData = useContext(ClientStyleContext);
+
+  const [theme] = useTheme();
+
+  // Only executed on client
+  useEffect(() => {
+    // reset cache to re-apply global styles
+    clientStyleData.reset();
+  }, [clientStyleData]);
 
   return (
-    <html lang='en' className={`h-full ${theme ? theme : 'dark'}`}>
+    <html lang="zh-TW">
       <head>
-        <meta charSet='utf-8' />
-        <meta name='viewport' content='width=device-width,initial-scale=1' />
-        <ThemeMeta />
+        {title ? <title>{title}</title> : null}
         <Meta />
+        <ThemeMeta />
         <Links />
+        <style id="stitches" dangerouslySetInnerHTML={{ __html: clientStyleData.sheet }} suppressHydrationWarning />
       </head>
-      <body className='h-full bg-white dark:bg-slate-800'>
-        <div className='flex h-full flex-col'>
-          <Nav />
-          <main className='flex-1 px-6'>
-            <Outlet />
-          </main>
-        </div>
+      <body>
+        {children}
         <SsrTheme serverTheme={!!theme} />
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
       </body>
     </html>
-  )
+  );
+};
+
+export function App() {
+  return (
+    <Document>
+      <Outlet />
+    </Document>
+  );
 }
 
 export default function AppProviders() {
@@ -58,4 +83,24 @@ export default function AppProviders() {
       <App />
     </ThemeProvider>
   )
+}
+
+export function CatchBoundary() {
+  const caught = useCatch();
+
+  return (
+    <Document title={`${caught.status} ${caught.statusText}`}>
+      <p>
+        [CatchBoundary]: {caught.status} {caught.statusText}
+      </p>
+    </Document>
+  );
+}
+
+export function ErrorBoundary({ error }: { error: Error }) {
+  return (
+    <Document title="Error!">
+      <p>[ErrorBoundary]: There was an error: {error.message}</p>
+    </Document>
+  );
 }
