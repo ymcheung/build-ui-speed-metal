@@ -1,0 +1,16 @@
+node_modules
+
+build/
+/.cache
+/server/build
+/public/build
+coverage/
+
+.env
+
+prisma/*.db
+prisma/*.db*
+
+app/**/*.ignore.*
+
+cypress/videos/
