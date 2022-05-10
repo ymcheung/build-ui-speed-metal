@@ -8,7 +8,6 @@ prisma/*.db
 content/
 mocks/
 
-app/styles
 app/**/*.ignore.*
 
 .eslintrc.js
